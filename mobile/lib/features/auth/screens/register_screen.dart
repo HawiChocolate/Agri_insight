@@ -39,13 +39,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isLoading = true);
     try {
-      await _authService.register(
+      final registered = await _authService.register(
         fullName: _nameController.text,
         phone: _phoneController.text,
         password: _passwordController.text,
         role: _selectedRole! == 'Extension' ? 'EXTENSION_WORKER' : 'EXPERT',
         preferredLanguage: 'en',
       );
+      if (!registered) {
+        throw ApiException('Registration failed. Please try again.');
+      }
       if (mounted) {
         Navigator.pushReplacementNamed(
           context,
@@ -55,9 +58,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (error) {
       if (mounted) {
+        final message = error is ApiException ? error.message : error.toString();
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
